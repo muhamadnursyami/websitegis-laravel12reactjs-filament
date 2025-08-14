@@ -258,7 +258,7 @@ export default function Tren({ chartData }: { chartData: ChartDataProps }) {
   return (
     <>
       <Head title="Tren Laporan Dugong" />
-      <main className="bg-slate-100 min-h-screen w-full font-sans p-4 sm:p-6 lg:p-8">
+      <main className="min-h-screen w-full font-sans p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="mb-8">
