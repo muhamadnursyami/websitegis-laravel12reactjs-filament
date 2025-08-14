@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\TrenController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -18,10 +19,8 @@ Route::get('/peta', function () {
     return Inertia::render('peta');
 })->name('peta');
 
-Route::get('/tren', function () {
-    return Inertia::render('tren');
-})->name('tren');
 
+Route::get('/tren', [TrenController::class, 'index'])->name('tren');
 
 Route::post('/laporan', [LaporanController::class, 'store'])->name('laporan.store');
 

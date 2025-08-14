@@ -12,7 +12,7 @@ createInertiaApp({
     title: (title) => {
     // Menambahkan prefix "Dugong Watch" untuk semua halaman
     const appName = import.meta.env.VITE_APP_NAME || 'Dugong Watch';
-    return title ? `${title} - ${appName}` : appName;
+    return title ;
   },
     resolve: async (name) => {
         const pages = import.meta.glob('./pages/**/*.tsx');
