@@ -31,8 +31,6 @@ Route::get('/api/categories', [LaporanController::class, 'getCategories'])->name
 Route::get('/api/laporans', [LaporanController::class, 'getAll'])->name('api.laporans');
 
 
-
-
 // Route lainnya
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

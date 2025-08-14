@@ -28,7 +28,11 @@ L.Icon.Default.mergeOptions({
 });
 /** ------------------------------------------------------------- */
 
-type Category = { id: number; name: string };
+type Category = { 
+  id: number; 
+  name: string; 
+  icon?: string; // Tambahkan field icon
+};
 type Laporan = {
   id: number;
   category_id: number;
@@ -43,7 +47,7 @@ type Laporan = {
   waktu?: string;
 };
 
-/** Warna default per kategori agar konsisten di legend/marker */
+/** Warna default per kategori agar konsisten di legend/marker (fallback jika tidak ada icon) */
 const COLOR_BY_NAME: Record<string, string> = {
   Mangrove: "#2ecc71",
   Lamun: "#27ae60",
@@ -72,7 +76,26 @@ function getCategoryColor(cat: Category, index: number) {
   return COLOR_BY_NAME[cat.name] || FALLBACK_COLORS[index % FALLBACK_COLORS.length];
 }
 
-/** Icon titik kecil berwarna (mirip dot/POI) */
+/** Icon gambar dari server atau fallback ke dot warna */
+function createMarkerIcon(category: Category, index: number) {
+  if (category.icon) {
+    // Gunakan gambar icon dari server
+    return L.icon({
+      iconUrl: `/storage/${category.icon}`,
+      iconSize: [32, 32], // Sesuaikan ukuran sesuai kebutuhan
+      iconAnchor: [16, 32], // Titik anchor (biasanya di bagian bawah tengah)
+      popupAnchor: [0, -32], // Posisi popup relatif terhadap icon
+      shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+      shadowSize: [41, 41],
+      shadowAnchor: [13, 41],
+    });
+  } else {
+    // Fallback ke dot warna jika tidak ada icon
+    return dotIcon(getCategoryColor(category, index));
+  }
+}
+
+/** Icon titik kecil berwarna (fallback jika tidak ada gambar icon) */
 function dotIcon(color: string) {
   return L.divIcon({
     className: "category-dot",
@@ -101,7 +124,7 @@ function MouseCoordinates({ setText }: { setText: (t: string) => void }) {
   return null;
 }
 
-/** Tombol reset ke “home view” (center + zoom awal) */
+/** Tombol reset ke "home view" (center + zoom awal) */
 function HomeButton({
   center,
   zoom,
@@ -125,7 +148,7 @@ function HomeButton({
   );
 }
 
-{/* Legend (responsif) */}
+{/* Legend (responsif) - Update untuk menampilkan icon atau dot */}
 function Legend({ categories }) {
   const [open, setOpen] = useState(false);
 
@@ -147,13 +170,21 @@ function Legend({ categories }) {
         <ul className="space-y-1">
           {categories.map((c, idx) => (
             <li key={c.id} className="flex items-center gap-2">
-              <span
-                className="inline-block w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border"
-                style={{
-                  background: getCategoryColor(c, idx),
-                  borderColor: "#e5e7eb",
-                }}
-              />
+              {c.icon ? (
+                <img 
+                  src={`/storage/${c.icon}`}
+                  alt={c.name}
+                  className="inline-block w-4 h-4 sm:w-5 sm:h-5 object-contain"
+                />
+              ) : (
+                <span
+                  className="inline-block w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full border"
+                  style={{
+                    background: getCategoryColor(c, idx),
+                    borderColor: "#e5e7eb",
+                  }}
+                />
+              )}
               <span className="truncate">{c.name}</span>
             </li>
           ))}
@@ -175,13 +206,21 @@ function Legend({ categories }) {
             <ul className="space-y-1">
               {categories.map((c, idx) => (
                 <li key={c.id} className="flex items-center gap-2">
-                  <span
-                    className="inline-block w-3 h-3 rounded-full border"
-                    style={{
-                      background: getCategoryColor(c, idx),
-                      borderColor: "#e5e7eb",
-                    }}
-                  />
+                  {c.icon ? (
+                    <img 
+                      src={`/storage/${c.icon}`}
+                      alt={c.name}
+                      className="inline-block w-4 h-4 object-contain"
+                    />
+                  ) : (
+                    <span
+                      className="inline-block w-3 h-3 rounded-full border"
+                      style={{
+                        background: getCategoryColor(c, idx),
+                        borderColor: "#e5e7eb",
+                      }}
+                    />
+                  )}
                   <span className="truncate">{c.name}</span>
                 </li>
               ))}
@@ -295,14 +334,22 @@ export default function Peta() {
                         onChange={() => onToggleCategory(cat.id)}
                         className="rounded text-blue-600 focus:ring-blue-500"
                       />
-                      {/* dot warna kecil biar konsisten sama legend/marker */}
-                      <span
-                        className="inline-block w-3 h-3 rounded-full border"
-                        style={{
-                          background: getCategoryColor(cat, idx),
-                          borderColor: "#e5e7eb",
-                        }}
-                      />
+                      {/* Tampilkan icon atau dot warna */}
+                      {cat.icon ? (
+                        <img 
+                          src={`/storage/${cat.icon}`}
+                          alt={cat.name}
+                          className="inline-block w-5 h-5 object-contain"
+                        />
+                      ) : (
+                        <span
+                          className="inline-block w-3 h-3 rounded-full border"
+                          style={{
+                            background: getCategoryColor(cat, idx),
+                            borderColor: "#e5e7eb",
+                          }}
+                        />
+                      )}
                       <span className="font-medium">{cat.name}</span>
                     </label>
                   ))}
@@ -357,14 +404,9 @@ export default function Peta() {
                     </LayersControl.BaseLayer>
                   </LayersControl>
 
-                  {/* Overlay: Titik per kategori
-                      Catatan penting:
-                      - Tidak render marker apapun kalau selectedCatIds.length === 0
-                      - Data sudah difilter di sisi klien berdasar category_id
-                  */}
+                  {/* Overlay: Titik per kategori dengan icon gambar */}
                   {selectedCatIds.length > 0 &&
                     categories.map((cat, idx) => {
-                      const color = getCategoryColor(cat, idx);
                       return (
                         <LayerGroup key={cat.id}>
                           {laporans
@@ -384,7 +426,7 @@ export default function Peta() {
                                 <Marker
                                   key={lap.id}
                                   position={[lat as number, lng as number]}
-                                  icon={dotIcon(color)}
+                                  icon={createMarkerIcon(cat, idx)} // Gunakan icon gambar atau fallback ke dot
                                 >
                                   <Popup>
                                     <div className="space-y-1">

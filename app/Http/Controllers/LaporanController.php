@@ -98,7 +98,7 @@ class LaporanController extends Controller
     public function getCategories()
     {
         try {
-            $categories = Category::select('id', 'name')->get();
+            $categories = Category::select('id', 'name', 'icon')->get();
             return response()->json([
                 'success' => true,
                 'data' => $categories
